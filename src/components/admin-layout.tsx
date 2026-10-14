@@ -12,6 +12,7 @@ import {
   DollarSign,
   MessageSquare,
   CalendarDays,
+  Ticket,
   LogOut,
   Menu,
   Sun,
@@ -32,6 +33,7 @@ const baseNavItems = [
   { label: 'Attendance', href: '/admin/attendance', icon: Calendar },
   { label: 'Payments', href: '/admin/payments', icon: DollarSign },
   { label: 'Schedule', href: '/admin/schedule', icon: CalendarDays },
+  { label: 'Events', href: '/admin/events', icon: Ticket },
   { label: 'Contact', href: '/admin/contact', icon: MessageSquare },
 ]
 

@@ -43,40 +43,41 @@ model ContactSubmission {
 }
 
 model Member {
-  id              String    @id @default(cuid())
-  name            String
-  phone           String
-  email           String?
-  dateOfBirth     DateTime?
-  gender          String?   // male, female, other
-  address         String?
+  id          String    @id @default(cuid())
+  name        String
+  phone       String
+  email       String?
+  dateOfBirth DateTime?
+  gender      String? // male, female, other
+  address     String?
 
   // Emergency Contact
-  emergencyContactName  String?
-  emergencyContactPhone String?
+  emergencyContactName     String?
+  emergencyContactPhone    String?
   emergencyContactRelation String?
 
   // Health Information
-  medicalConditions String?  // Any medical conditions to be aware of
-  injuries          String?  // Any injuries or physical limitations
+  medicalConditions String? // Any medical conditions to be aware of
+  injuries          String? // Any injuries or physical limitations
 
   // Membership
-  packageType     String    // package-1, package-2, package-3
+  packageType     String // package-1, package-2, package-3
   status          String    @default("active") // active, inactive
   joinDate        DateTime  @default(now())
   nextPaymentDate DateTime?
 
   // Terms
-  agreedToTerms   Boolean   @default(false)
-  agreedAt        DateTime?
+  agreedToTerms Boolean   @default(false)
+  agreedAt      DateTime?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  attendances     Attendance[]
-  payments        Payment[]
-  weightEntries   WeightEntry[]
-  goal            MemberGoal?
-  personalRecords PersonalRecord[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  attendances        Attendance[]
+  payments           Payment[]
+  weightEntries      WeightEntry[]
+  goal               MemberGoal?
+  personalRecords    PersonalRecord[]
+  eventRegistrations EventRegistration[]
 }
 
 model Attendance {
@@ -84,8 +85,8 @@ model Attendance {
   memberId  String
   member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   date      DateTime @default(now())
-  timeSlot  String   // morning (6:30 AM), evening (5:00 PM)
-  dayOfWeek String   // Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+  timeSlot  String // morning (6:30 AM), evening (5:00 PM)
+  dayOfWeek String // Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
   createdAt DateTime @default(now())
 
   @@index([memberId])
@@ -93,16 +94,16 @@ model Attendance {
 }
 
 model Payment {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   memberId  String
-  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member    Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount    Float
-  package   String   // package-1, package-2, package-3
-  status    String   @default("pending") // paid, pending, overdue
+  package   String // package-1, package-2, package-3
+  status    String    @default("pending") // paid, pending, overdue
   dueDate   DateTime
   paidDate  DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([memberId])
   @@index([status])
@@ -112,8 +113,8 @@ model WeightEntry {
   id        String   @id @default(cuid())
   memberId  String
   member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  weight    Float    // kg
-  bodyFat   Float?   // % body fat
+  weight    Float // kg
+  bodyFat   Float? // % body fat
   date      DateTime @default(now())
   notes     String?
   createdAt DateTime @default(now())
@@ -128,7 +129,7 @@ model MemberGoal {
   goalDescription String?
   targetWeight    Float?
   targetDate      DateTime?
-  fitnessLevel    String?   // beginner, intermediate, advanced
+  fitnessLevel    String? // beginner, intermediate, advanced
   notes           String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -149,15 +150,16 @@ model PersonalRecord {
 
 model Schedule {
   id        String   @id @default(cuid())
-  dayOfWeek String   // Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
-  timeSlot  String   // 6:30 AM, 5:00 PM
-  activity  String   // Leg Day, Upper Body, Recovery, Fun Walk/Run
+  dayOfWeek String // Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+  timeSlot  String // 6:30 AM, 5:00 PM
+  activity  String // Leg Day, Upper Body, Recovery, Fun Walk/Run
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([dayOfWeek, timeSlot])
 }
+
 model AdminUser {
   id           String   @id @default(cuid())
   username     String   @unique
@@ -166,4 +168,36 @@ model AdminUser {
   name         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Event {
+  id            String              @id @default(cuid())
+  title         String
+  date          DateTime
+  location      String?
+  description   String?
+  fee           Float? // null = free event
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  registrations EventRegistration[]
+
+  @@index([date])
+}
+
+model EventRegistration {
+  id         String    @id @default(cuid())
+  eventId    String
+  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  // Set for existing members; null for non-members. fullName is always stored so
+  // the record survives the member being deleted.
+  memberId   String?
+  member     Member?   @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  fullName   String
+  consent    Boolean   @default(false)
+  consentAt  DateTime?
+  amountPaid Float? // null = no payment taken
+  createdAt  DateTime  @default(now())
+
+  @@unique([eventId, memberId])
+  @@index([eventId])
 }
