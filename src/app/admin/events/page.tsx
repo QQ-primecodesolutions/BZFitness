@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/hooks/use-toast'
 import { AdminLayout } from '@/components/admin-layout'
-import { ArrowLeft, CalendarDays, Edit, MapPin, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Edit, EyeOff, MapPin, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react'
 
 interface EventSummary {
   id: string
@@ -23,6 +24,7 @@ interface EventSummary {
   location: string | null
   description: string | null
   fee: number | null
+  isPublic: boolean
   registrationCount: number
   totalCollected: number
 }
@@ -52,7 +54,7 @@ const CONSENT_TEXT =
   'The participant consents to taking part in this event, confirms they are fit to participate, ' +
   'and understands that participation is at their own risk.'
 
-const emptyEventForm = { title: '', date: '', location: '', description: '', fee: '' }
+const emptyEventForm = { title: '', date: '', location: '', description: '', fee: '', isPublic: true }
 const emptyRegisterForm = {
   type: 'member' as 'member' | 'non-member',
   memberId: '',
@@ -156,6 +158,7 @@ export default function EventsPage() {
       location: event.location ?? '',
       description: event.description ?? '',
       fee: event.fee !== null ? String(event.fee) : '',
+      isPublic: event.isPublic,
     })
     setIsEventModalOpen(true)
   }
@@ -272,6 +275,13 @@ export default function EventsPage() {
   const feeBadge = (fee: number | null) =>
     fee ? <Badge className="bg-green-600">{formatRand(fee)}</Badge> : <Badge variant="secondary">Free</Badge>
 
+  const hiddenBadge = (
+    <Badge variant="outline" className="gap-1">
+      <EyeOff className="h-3 w-3" />
+      Not on website
+    </Badge>
+  )
+
   return (
     <AdminLayout title="Events">
       {selectedEvent ? (
@@ -286,6 +296,7 @@ export default function EventsPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 <h2 className="text-3xl font-bold">{selectedEvent.title}</h2>
                 {feeBadge(selectedEvent.fee)}
+                {!selectedEvent.isPublic && hiddenBadge}
               </div>
               <div className="text-muted-foreground mt-2 space-y-1 text-sm">
                 <p className="flex items-center gap-2">
@@ -428,6 +439,7 @@ export default function EventsPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
+                      {!event.isPublic && hiddenBadge}
                       {event.location && (
                         <p className="flex items-center gap-2 text-muted-foreground">
                           <MapPin className="h-4 w-4" />
@@ -507,6 +519,14 @@ export default function EventsPage() {
                   onChange={e => setEventForm({ ...eventForm, description: e.target.value })}
                   rows={3}
                 />
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="event-isPublic"
+                  checked={eventForm.isPublic}
+                  onCheckedChange={checked => setEventForm({ ...eventForm, isPublic: checked })}
+                />
+                <Label htmlFor="event-isPublic">Show on website</Label>
               </div>
             </div>
             <DialogFooter>

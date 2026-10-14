@@ -177,6 +177,7 @@ model Event {
   location      String?
   description   String?
   fee           Float? // null = free event
+  isPublic      Boolean             @default(true) // shown on the landing page
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   registrations EventRegistration[]

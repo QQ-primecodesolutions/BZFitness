@@ -97,7 +97,7 @@ export function ContactForm() {
           name="phone"
           required
           type="tel"
-          placeholder="062 923 9411"
+          placeholder="071 234 5678"
           suppressHydrationWarning
         />
       </div>

@@ -4,7 +4,23 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ContactForm } from '@/components/contact-form'
-import { Users, Target, Calendar, MapPin, Phone, Mail, Clock, ArrowRight, Star, CheckCircle2 } from 'lucide-react'
+import { SOCIAL_LINKS, SocialIcon } from '@/components/social-links'
+import { format } from 'date-fns'
+import { Users, Target, Calendar, MapPin, Phone, Mail, Clock, ArrowRight, Star, CheckCircle2, Ticket } from 'lucide-react'
+
+interface PublicEvent {
+  id: string
+  title: string
+  date: string
+  location: string | null
+  description: string | null
+  fee: number | null
+}
+
+const eventWhatsAppLink = (event: PublicEvent) =>
+  `https://wa.me/27837013665?text=${encodeURIComponent(
+    `Hi BZ Fitness - I'd like to register for ${event.title} on ${format(new Date(event.date), 'EEE d MMM')}`
+  )}`
 
 interface ScheduleItem {
   id: string
@@ -26,6 +42,7 @@ const DAY_ABBR: Record<string, string> = {
 export default function Home() {
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([])
   const [scheduleLoading, setScheduleLoading] = useState(true)
+  const [events, setEvents] = useState<PublicEvent[]>([])
 
   useEffect(() => {
     fetch('/api/schedule')
@@ -33,6 +50,11 @@ export default function Home() {
       .then(data => setScheduleData(data))
       .catch(() => setScheduleData([]))
       .finally(() => setScheduleLoading(false))
+
+    fetch('/api/events')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setEvents(data))
+      .catch(() => setEvents([]))
   }, [])
 
   const morningSchedule = scheduleData.filter(s => s.timeSlot === '6:30 AM' && s.dayOfWeek !== 'Saturday')
@@ -52,15 +74,18 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-6">
               <a href="#about" className="text-sm font-medium hover:text-green-600 transition-colors">About</a>
               <a href="#programs" className="text-sm font-medium hover:text-green-600 transition-colors">Programs</a>
+              {events.length > 0 && (
+                <a href="#events" className="text-sm font-medium hover:text-green-600 transition-colors">Events</a>
+              )}
               <a href="#contact" className="text-sm font-medium hover:text-green-600 transition-colors">Contact</a>
               <Button asChild className="bg-green-600 hover:bg-green-700">
-                <a href="https://wa.me/27629239411?text=Hi%20BZ%20Fitness%20-%20I%27m%20interested%20in%20joining">
+                <a href="https://wa.me/27837013665?text=Hi%20BZ%20Fitness%20-%20I%27m%20interested%20in%20joining">
                   Join Now
                 </a>
               </Button>
             </div>
             <Button asChild className="md:hidden bg-green-600 hover:bg-green-700" size="sm">
-              <a href="https://wa.me/27629239411?text=Hi%20BZ%20Fitness%20-%20I%27m%20interested%20in%20joining">
+              <a href="https://wa.me/27837013665?text=Hi%20BZ%20Fitness%20-%20I%27m%20interested%20in%20joining">
                 <Phone className="h-4 w-4 mr-2" />
                 Contact
               </a>
@@ -87,7 +112,7 @@ export default function Home() {
                 </a>
               </Button>
               <Button asChild size="lg" variant="outline" className="text-lg px-8 border-green-600 text-green-600 hover:bg-green-50">
-                <a href="https://wa.me/27629239411?text=Hi%20BZ%20Fitness%20-%20I%27m%20interested%20in%20joining" target="_blank" rel="noopener noreferrer">
+                <a href="https://wa.me/27837013665?text=Hi%20BZ%20Fitness%20-%20I%27m%20interested%20in%20joining" target="_blank" rel="noopener noreferrer">
                   Message on WhatsApp
                 </a>
               </Button>
@@ -419,7 +444,7 @@ export default function Home() {
 
           <div className="text-center mt-8">
           <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-lg px-8">
-          <a href="https://wa.me/27629239411?text=Hi%20BZ%20Fitness%20-%20I%27d%20like%20to%20reserve%20a%20spot" target="_blank" rel="noopener noreferrer">
+          <a href="https://wa.me/27837013665?text=Hi%20BZ%20Fitness%20-%20I%27d%20like%20to%20reserve%20a%20spot" target="_blank" rel="noopener noreferrer">
           Reserve a spot
           <ArrowRight className="ml-2 h-5 w-5" />
           </a>
@@ -431,7 +456,7 @@ export default function Home() {
           {/* Kept out of the pricing block above so the CTA survives its removal */}
           <div className="text-center mt-8">
             <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-lg px-8">
-              <a href="https://wa.me/27629239411?text=Hi%20BZ%20Fitness%20-%20I%27d%20like%20to%20reserve%20a%20spot" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/27837013665?text=Hi%20BZ%20Fitness%20-%20I%27d%20like%20to%20reserve%20a%20spot" target="_blank" rel="noopener noreferrer">
                 Reserve a spot
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
@@ -439,6 +464,76 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Events Section - hidden entirely when there are no upcoming public events */}
+      {events.length > 0 && (
+        <section id="events" className="py-20 px-4">
+          <div className="container mx-auto">
+            <div className="max-w-4xl mx-auto text-center mb-12">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">Upcoming events</h2>
+              <p className="text-lg text-muted-foreground">
+                Members and non-members welcome. Register on WhatsApp to secure your spot.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
+              {events.map((event) => (
+                <Card key={event.id} className="border-2 flex flex-col w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="text-center bg-green-600 text-white rounded-lg px-3 py-2 shrink-0">
+                        <div className="text-xs uppercase font-semibold">{format(new Date(event.date), 'MMM')}</div>
+                        <div className="text-2xl font-bold leading-none">{format(new Date(event.date), 'd')}</div>
+                      </div>
+                      <span className={`text-sm font-semibold px-3 py-1 rounded-full ${event.fee ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300' : 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300'}`}>
+                        {event.fee ? `R${event.fee.toFixed(2).replace(/\.00$/, '')}` : 'Free'}
+                      </span>
+                    </div>
+                    <CardTitle className="mt-4 text-xl">{event.title}</CardTitle>
+                    <CardDescription className="space-y-1">
+                      <span className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-green-600" />
+                        {format(new Date(event.date), 'EEEE, d MMMM · HH:mm')}
+                      </span>
+                      {event.location && (
+                        <span className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-green-600" />
+                          {event.location}
+                        </span>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    {event.description && (
+                      <p className="text-sm text-muted-foreground whitespace-pre-line">{event.description}</p>
+                    )}
+                    <Button asChild className="mt-auto bg-green-600 hover:bg-green-700">
+                      <a href={eventWhatsAppLink(event)} target="_blank" rel="noopener noreferrer">
+                        <Ticket className="h-4 w-4 mr-2" />
+                        Register on WhatsApp
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <p className="font-semibold mb-4">View previous events on our socials</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                {SOCIAL_LINKS.map((social) => (
+                  <Button key={social.label} asChild variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30">
+                    <a href={social.href} target="_blank" rel="noopener noreferrer">
+                      <SocialIcon path={social.path} className="h-4 w-4 mr-2" />
+                      {social.label}
+                    </a>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Contact Section */}
       <section id="contact" className="py-20 px-4">
@@ -462,9 +557,9 @@ export default function Home() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button asChild variant="outline" className="w-full justify-start border-green-600 text-green-600 hover:bg-green-50">
-                    <a href="https://wa.me/27629239411?text=Hello%20BZ%20Fitness%20-%20I%27d%20like%20to%20register" target="_blank" rel="noopener noreferrer">
+                    <a href="https://wa.me/27837013665?text=Hello%20BZ%20Fitness%20-%20I%27d%20like%20to%20register" target="_blank" rel="noopener noreferrer">
                       <Phone className="h-4 w-4 mr-2" />
-                      062 9239 411
+                      083 701 3665
                     </a>
                   </Button>
                   <Button asChild variant="outline" className="w-full justify-start border-green-600 text-green-600 hover:bg-green-50">
@@ -544,6 +639,20 @@ export default function Home() {
               <p className="text-sm text-gray-400">
                 Transform your body, Elevate your mind — affordable community fitness in Tseki.
               </p>
+              <div className="flex gap-3 mt-4">
+                {SOCIAL_LINKS.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`BZ Fitness on ${social.label}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-800 text-gray-300 hover:bg-green-600 hover:text-white transition-colors"
+                  >
+                    <SocialIcon path={social.path} className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -551,6 +660,9 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
                 <li><a href="#programs" className="hover:text-white transition-colors">Programs</a></li>
+                {events.length > 0 && (
+                  <li><a href="#events" className="hover:text-white transition-colors">Events</a></li>
+                )}
                 <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
@@ -560,7 +672,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  062 9239 411
+                  083 701 3665
                 </li>
                 <li className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />

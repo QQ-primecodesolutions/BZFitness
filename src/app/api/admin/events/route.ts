@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         location: location?.trim() || null,
         description: description?.trim() || null,
         fee,
+        isPublic: body.isPublic !== false,
       },
     })
 
