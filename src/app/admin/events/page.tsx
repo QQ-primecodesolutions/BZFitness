@@ -15,7 +15,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/hooks/use-toast'
 import { AdminLayout } from '@/components/admin-layout'
-import { ArrowLeft, CalendarDays, Edit, EyeOff, MapPin, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Download, Edit, EyeOff, MapPin, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react'
+import { CONSENT_TEXT } from '@/lib/event-consent'
+import { exportEventRegisterPdf } from '@/lib/export-event-pdf'
 
 interface EventSummary {
   id: string
@@ -50,9 +52,6 @@ interface Member {
   status: string
 }
 
-const CONSENT_TEXT =
-  'The participant consents to taking part in this event, confirms they are fit to participate, ' +
-  'and understands that participation is at their own risk.'
 
 const emptyEventForm = { title: '', date: '', location: '', description: '', fee: '', isPublic: true }
 const emptyRegisterForm = {
@@ -318,6 +317,19 @@ export default function EventsPage() {
               <Button onClick={openRegister} className="flex items-center gap-2">
                 <UserPlus className="h-4 w-4" />
                 Register person
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() =>
+                  exportEventRegisterPdf(selectedEvent).catch(error => {
+                    console.error('Error exporting PDF:', error)
+                    toast({ title: 'Error', description: 'Failed to create PDF', variant: 'destructive' })
+                  })
+                }
+              >
+                <Download className="h-4 w-4" />
+                Export PDF
               </Button>
               <Button variant="outline" size="icon" onClick={() => openEditEvent(selectedEvent)} aria-label="Edit event">
                 <Edit className="h-4 w-4" />
