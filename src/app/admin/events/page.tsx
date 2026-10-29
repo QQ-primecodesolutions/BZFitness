@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/hooks/use-toast'
 import { AdminLayout } from '@/components/admin-layout'
-import { ArrowLeft, CalendarDays, Download, Edit, EyeOff, MapPin, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Download, Edit, Eye, EyeOff, MapPin, Plus, Search, Trash2, UserPlus, Users } from 'lucide-react'
 import { CONSENT_TEXT } from '@/lib/event-consent'
 import { exportEventRegisterPdf } from '@/lib/export-event-pdf'
 
@@ -184,6 +184,29 @@ export default function EventsPage() {
     if (await send(`/api/admin/events/${event.id}`, 'DELETE', undefined, 'Event deleted')) {
       setSelectedEvent(null)
       fetchEvents()
+    }
+  }
+
+  // Flip the switch immediately, and put it back if the save fails
+  const handleTogglePublic = async (event: EventSummary, isPublic: boolean) => {
+    const setPublic = (value: boolean) =>
+      setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, isPublic: value } : e)))
+    setPublic(isPublic)
+    try {
+      const res = await fetch(`/api/admin/events/${event.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      toast({
+        title: isPublic ? 'Shown on website' : 'Hidden from website',
+        description: event.title,
+      })
+    } catch (error) {
+      console.error('Error toggling event visibility:', error)
+      setPublic(!isPublic)
+      toast({ title: 'Error', description: 'Failed to update the event', variant: 'destructive' })
     }
   }
 
@@ -451,7 +474,6 @@ export default function EventsPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
-                      {!event.isPublic && hiddenBadge}
                       {event.location && (
                         <p className="flex items-center gap-2 text-muted-foreground">
                           <MapPin className="h-4 w-4" />
@@ -465,6 +487,27 @@ export default function EventsPage() {
                           <span className="text-green-600 font-semibold">· {formatRand(event.totalCollected)}</span>
                         )}
                       </p>
+                      {/* stopPropagation so toggling doesn't also open the event */}
+                      <div
+                        className="flex items-center justify-between gap-3 border-t pt-3 mt-3"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Label htmlFor={`public-${event.id}`} className="flex items-center gap-2 font-normal cursor-pointer">
+                          {event.isPublic ? (
+                            <Eye className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          {event.isPublic
+                            ? isPast ? 'Shown in past events' : 'Shown on website'
+                            : 'Hidden from website'}
+                        </Label>
+                        <Switch
+                          id={`public-${event.id}`}
+                          checked={event.isPublic}
+                          onCheckedChange={checked => handleTogglePublic(event, checked)}
+                        />
+                      </div>
                     </CardContent>
                   </Card>
                 )

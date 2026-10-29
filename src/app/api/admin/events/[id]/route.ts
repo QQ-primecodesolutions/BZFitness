@@ -87,6 +87,40 @@ export async function PUT(
   }
 }
 
+// PATCH toggle whether the event shows on the public site
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { id } = await params
+    const { getFreshDb } = await import('@/lib/fresh-db')
+    const db = getFreshDb()
+
+    const { isPublic } = await request.json()
+    if (typeof isPublic !== 'boolean') {
+      await db.$disconnect()
+      return NextResponse.json({ error: 'isPublic must be true or false' }, { status: 400 })
+    }
+
+    const result = await db.event.updateMany({ where: { id }, data: { isPublic } })
+
+    await db.$disconnect()
+    if (result.count === 0) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+    }
+    return NextResponse.json({ id, isPublic })
+  } catch (error) {
+    console.error('Error toggling event visibility:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 // DELETE event (its registrations are deleted with it)
 export async function DELETE(
   request: NextRequest,

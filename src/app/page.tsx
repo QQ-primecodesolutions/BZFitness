@@ -42,7 +42,9 @@ const DAY_ABBR: Record<string, string> = {
 export default function Home() {
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([])
   const [scheduleLoading, setScheduleLoading] = useState(true)
-  const [events, setEvents] = useState<PublicEvent[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<PublicEvent[]>([])
+  const [pastEvents, setPastEvents] = useState<PublicEvent[]>([])
+  const hasEvents = upcomingEvents.length > 0 || pastEvents.length > 0
 
   useEffect(() => {
     fetch('/api/schedule')
@@ -52,9 +54,12 @@ export default function Home() {
       .finally(() => setScheduleLoading(false))
 
     fetch('/api/events')
-      .then(res => res.ok ? res.json() : [])
-      .then(data => setEvents(data))
-      .catch(() => setEvents([]))
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        setUpcomingEvents(data?.upcoming ?? [])
+        setPastEvents(data?.past ?? [])
+      })
+      .catch(() => {})
   }, [])
 
   const morningSchedule = scheduleData.filter(s => s.timeSlot === '6:30 AM' && s.dayOfWeek !== 'Saturday')
@@ -74,7 +79,7 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-6">
               <a href="#about" className="text-sm font-medium hover:text-green-600 transition-colors">About</a>
               <a href="#programs" className="text-sm font-medium hover:text-green-600 transition-colors">Programs</a>
-              {events.length > 0 && (
+              {hasEvents && (
                 <a href="#events" className="text-sm font-medium hover:text-green-600 transition-colors">Events</a>
               )}
               <a href="#contact" className="text-sm font-medium hover:text-green-600 transition-colors">Contact</a>
@@ -465,19 +470,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Events Section - hidden entirely when there are no upcoming public events */}
-      {events.length > 0 && (
+      {/* Events Section - hidden entirely when no events are switched on for the website */}
+      {hasEvents && (
         <section id="events" className="py-20 px-4">
           <div className="container mx-auto">
             <div className="max-w-4xl mx-auto text-center mb-12">
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">Upcoming events</h2>
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">
+                {upcomingEvents.length > 0 ? 'Upcoming events' : 'Our events'}
+              </h2>
               <p className="text-lg text-muted-foreground">
-                Members and non-members welcome. Register on WhatsApp to secure your spot.
+                {upcomingEvents.length > 0
+                  ? 'Members and non-members welcome. Register on WhatsApp to secure your spot.'
+                  : 'No upcoming events right now. Follow us on social media to hear about the next one.'}
               </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
-              {events.map((event) => (
+              {upcomingEvents.map((event) => (
                 <Card key={event.id} className="border-2 flex flex-col w-full md:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)]">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-3">
@@ -517,6 +526,32 @@ export default function Home() {
                 </Card>
               ))}
             </div>
+
+            {pastEvents.length > 0 && (
+              <div className={`max-w-6xl mx-auto ${upcomingEvents.length > 0 ? 'mt-16' : ''}`}>
+                <h3 className="text-2xl font-bold text-center mb-6">Past events</h3>
+                <div className="flex flex-wrap justify-center gap-4">
+                  {pastEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex items-center gap-4 rounded-lg border bg-gray-50 dark:bg-gray-900 p-4 w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)]"
+                    >
+                      <div className="text-center bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 rounded-lg px-3 py-2 shrink-0">
+                        <div className="text-xs uppercase font-semibold">{format(new Date(event.date), 'MMM')}</div>
+                        <div className="text-xl font-bold leading-none">{format(new Date(event.date), 'd')}</div>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{event.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(event.date), 'd MMMM yyyy')}
+                          {event.location && <> · {event.location}</>}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="text-center mt-12">
               <p className="font-semibold mb-4">View previous events on our socials</p>
@@ -660,7 +695,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
                 <li><a href="#programs" className="hover:text-white transition-colors">Programs</a></li>
-                {events.length > 0 && (
+                {hasEvents && (
                   <li><a href="#events" className="hover:text-white transition-colors">Events</a></li>
                 )}
                 <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
